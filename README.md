@@ -1,3 +1,6 @@
+> [!NOTE]
+> This is not complete yet, please use [deployWisp](https://github.com/rhenryw/deployWisp)
+
 # deployRay
 Easily deploy XTLS/Xray-core to replace traditional wisp servers
 
