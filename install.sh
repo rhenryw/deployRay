@@ -4,14 +4,14 @@
 set -e
 
 cat <<'BANNER'
-  _____             _            _____              
- |  __ \           | |          |  __ \             
+  _____             _             _____              
+ |  __ \           | |           |  __ \             
  | |  | | ___ _ __ | | ___  _   _| |__) |__ _ _   _ 
  | |  | |/ _ \ '_ \| |/ _ \| | | |  _  // _` | | | |
  | |__| |  __/ |_) | | (_) | |_| | | \ \ (_| | |_| |
  |_____/ \___| .__/|_|\___/ \__, |_|  \_\__,_|\__, |
              | |             __/ |             __/ |
-             |_|            |___/             |___/  v1.72
+             |_|            |___/             |___/  v1.76
                                           
  by: RHW.one
 BANNER
@@ -75,7 +75,7 @@ cat <<EOF > config.json
 }
 EOF
 
-# 4. Setup Wisp-Gate (Bridge)
+# this sets up the wisp-xray config
 echo "Setting up Wisp-to-Xray Bridge..."
 mkdir -p ~/wisp-gate && cd ~/wisp-gate
 npm init -y > /dev/null
@@ -97,13 +97,77 @@ server.on("upgrade", (req, socket, head) => {
 server.listen($WISP_PORT, "127.0.0.1");
 EOF
 
-# 5. Start Services
 echo "Starting services with PM2..."
 cd ~/xray && pm2 start ./xray --name "deployRay" -- run -c config.json
 cd ~/wisp-gate && pm2 start index.js --name "wisp-gate"
 pm2 save
 
-# 6. Nginx Config
+# make page @ /
+echo "Creating web root..."
+sudo mkdir -p /var/www/deployray
+
+sudo tee /var/www/deployray/index.html > /dev/null <<EOF
+<!DOCTYPE html>
+<html data-theme="dark" lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>deployRay — Xray Gate</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rhenryw/one.css@main/dist/one.light.min.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+    pre {
+      text-align: left;
+      font-size: 0.7rem;
+      line-height: 1.2;
+      overflow-x: auto;
+    }
+    footer {
+      margin-top: 3rem;
+      font-size: 0.85rem;
+      opacity: 0.6;
+    }
+    footer a {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <pre aria-hidden="true">
+  _____             _            _____
+ |  __ \           | |          |  __ \
+ | |  | | ___ _ __ | | ___  _   _| |__) |__ _ _   _
+ | |  | |/ _ \ '_ \| |/ _ \| | | |  _  // _\` | | | |
+ | |__| |  __/ |_) | | (_) | |_| | | \ \ (_| | |_| |
+ |_____/ \___| .__/|_|\___/ \__, |_|  \_\__,_|\__, |
+             | |             __/ |             __/ |
+             |_|            |___/             |___/
+  </pre>
+
+  <h1>Xray Gate</h1>
+  <p>This node is active and operational.</p>
+  <hr />
+  <p>
+    Powered by <a href="https://github.com/rhenryw/deployRay" target="_blank" rel="noopener">deployRay</a>
+    and <a href="https://github.com/XTLS" target="_blank" rel="noopener">XTLS</a>.
+  </p>
+
+  <footer>
+    <small>$DOMAIN &mdash; deployRay v1.72 by <a href="https://rhw.one" target="_blank" rel="noopener">RHW.one</a></small>
+  </footer>
+</body>
+</html>
+EOF
+
+# nginx my love
 echo "Configuring Nginx..."
 sudo tee /etc/nginx/sites-available/deployray.conf > /dev/null <<EOF
 server {
@@ -140,7 +204,7 @@ EOF
 sudo ln -sf /etc/nginx/sites-available/deployray.conf /etc/nginx/sites-enabled/
 sudo systemctl restart nginx
 
-# 7. SSL (Optional)
+# ssl 
 if [ "$SSL_ENABLED" = true ]; then
     sudo apt-get install -y certbot python3-certbot-nginx
     sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m me@rhw.one --redirect
@@ -148,7 +212,7 @@ if [ "$SSL_ENABLED" = true ]; then
 fi
 
 echo "--------------------------------------------------"
-echo "✅ deployRay v1.72 Operational"
+echo "✅ deployRay v1.76 Operational"
 echo "--------------------------------------------------"
 echo "Xray Endpoint: wss://$DOMAIN$WS_PATH"
 echo "Wisp Endpoint: wss://$DOMAIN$WISP_PATH"
