@@ -1,5 +1,5 @@
 > [!NOTE]
-> This is not complete yet, please use [deployWisp](https://github.com/rhenryw/deployWisp)
+> This this is [deployWisp](https://github.com/rhenryw/deployWisp) but routed through [Xray](https://github.com/XTLS/Xray-core), this increases latency by about 35% but is much harder to detect, so it works for more websites
 
 # deployRay
 Easily deploy XTLS/Xray-core to replace traditional wisp servers
